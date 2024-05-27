@@ -20,8 +20,8 @@ This project enables real-time sharing of heart rate data from a Bluetooth heart
 ### Clone the Repository
 
 ```sh
-git clone https://github.com/yourusername/bluetooth-websocket-server.git
-cd bluetooth-websocket-server
+git clone https://github.com/leandrotoledo/gohrm.git
+cd gohrm
 ```
 
 ### Install Dependencies
