@@ -2,6 +2,8 @@
 
 This project enables real-time sharing of heart rate data from a Bluetooth heart rate monitor. It is designed for scenarios where individuals, such as personal trainers or coaches, need to monitor a person's heart rate remotely. The heart rate data is retrieved from a Bluetooth fitness tracker and served over a WebSocket connection, allowing it to be accessed via a phone or browser.
 
+![Screenshot](https://github.com/leandrotoledo/gohrm/assets/615742/b710e85f-3ea0-43dd-9e6f-e940d10389b4)
+
 ## Features
 
 - Scans and connects to Bluetooth heart rate monitors (currently hard-coded for WHOOP fitness trackers).
