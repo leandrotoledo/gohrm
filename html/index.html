@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live EKG Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.3.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@1.27.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0"></script>
+    <style>
+        canvas {
+            max-width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="ekgChart"></canvas>
+    <script>
+        // Initialize the WebSocket connection
+        const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsHost = window.location.hostname;
+        const wsPort = window.location.port ? `:${window.location.port}` : "";
+        const wsPath = "/ws";
+
+        const ws = new WebSocket(`${wsProtocol}://${wsHost}${wsPort}${wsPath}`);
+
+        // Maximum heart rate assumption
+        const maxHeartRate = 190;
+
+        // Heart rate zones
+        const zones = {
+            zone1: 0.50 * maxHeartRate,
+            zone2: 0.60 * maxHeartRate,
+            zone3: 0.70 * maxHeartRate,
+            zone4: 0.80 * maxHeartRate,
+            zone5: 0.90 * maxHeartRate
+        };
+
+        let latestHeartRate = 0;
+
+        // Handle incoming WebSocket messages
+        ws.onmessage = function (event) {
+            latestHeartRate = parseInt(event.data);
+        };
+
+        // Handle WebSocket connection errors
+        ws.onerror = function (event) {
+            console.error("WebSocket error observed:", event);
+        };
+
+        const onRefresh = chart => {
+            const now = Date.now();
+            chart.data.datasets.forEach(dataset => {
+                dataset.data.push({
+                    x: now,
+                    y: latestHeartRate
+                });
+            });
+        };
+
+        const config = {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'Heart Rate',
+                        backgroundColor: 'rgba(0, 255, 0, 0.5)', //rgba for green color: 'rgba(0, 255, 0, 0.5)'
+                        borderColor: 'rgb(0, 255, 0)',
+                        cubicInterpolationMode: 'monotone',
+                        data: []
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'realtime',
+                        realtime: {
+                            duration: 20000,
+                            refresh: 1000,
+                            delay: 2000,
+                            onRefresh: onRefresh
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: maxHeartRate,
+                        title: {
+                            display: true,
+                            text: 'Heart Rate (bpm)'
+                        },
+                        ticks: {
+                            stepSize: 10
+                        }
+                    }
+                },
+                plugins: {
+                    annotation: {
+                        annotations: [
+                            {
+                                type: 'box',
+                                yMax: zones.zone2,
+                                yMin: 0,
+                                backgroundColor: 'rgba(0, 255, 0, 0.1)',
+                                borderWidth: 0.5,
+                            },
+                            {
+                                type: 'box',
+                                yMax: zones.zone3,
+                                yMin: zones.zone2,
+                                backgroundColor: 'rgba(255, 255, 0, 0.1)',
+                                borderWidth: 0.5,
+                            },
+                            {
+                                type: 'box',
+                                yMax: zones.zone4,
+                                yMin: zones.zone3,
+                                backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                                borderWidth: 0.5,
+                            },
+                            {
+                                type: 'box',
+                                yMax: zones.zone5,
+                                yMin: zones.zone4,
+                                backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                                borderWidth: 0.5,
+                            },
+                            {
+                                type: 'box',
+                                yMin: zones.zone5,
+                                backgroundColor: 'rgba(128, 0, 128, 0.1)',
+                                borderWidth: 0.5,
+                            }
+                        ]
+                    }
+                },
+                interaction: {
+                    intersect: false
+                }
+            }
+        };
+
+        // Create the chart
+        const ctx = document.getElementById('ekgChart').getContext('2d');
+        const ekgChart = new Chart(ctx, config);
+    </script>
+</body>
+
+</html>
